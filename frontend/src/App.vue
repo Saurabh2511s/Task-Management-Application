@@ -1,117 +1,169 @@
 <template>
-  <main style="max-width: 720px; margin: 24px auto; font-family: Arial, sans-serif;">
-    <h2>Task Management Application</h2>
+  <main class="page">
+    <header class="header">
+      <h1 class="title">Task Management</h1>
+      <p class="subtitle">Create, update, filter and manage tasks</p>
+    </header>
 
     <!-- Create -->
-    <section style="margin: 16px 0; padding: 12px; border: 1px solid #ddd;">
-      <h3 style="margin: 0 0 8px;">Create Task</h3>
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title">Create Task</h2>
+      </div>
 
-      <form @submit.prevent="createTask">
-        <div style="display: grid; gap: 8px;">
-          <input v-model="form.title" placeholder="Title *" />
-          <textarea v-model="form.description" placeholder="Description"></textarea>
+      <form class="form" @submit.prevent="createTask">
+        <div class="grid">
+          <div class="field">
+            <label class="label">Title <span class="req">*</span></label>
+            <input class="input" v-model="form.title" placeholder="e.g. Fix pagination UI" />
+          </div>
 
-          <div style="display: flex; gap: 8px;">
-            <select v-model="form.status">
+          <div class="field">
+            <label class="label">Status</label>
+            <select class="select" v-model="form.status">
               <option value="pending">Pending</option>
               <option value="in_progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
-
-            <input v-model="form.due_date" type="date" />
           </div>
 
-          <button type="submit">Add</button>
+          <div class="field full">
+            <label class="label">Description</label>
+            <textarea
+              class="textarea"
+              v-model="form.description"
+              placeholder="Short description (optional)"
+              rows="3"
+            />
+          </div>
 
-          <p v-if="error" style="color: #b00020; margin: 0;">{{ error }}</p>
+          <div class="field">
+            <label class="label">Due Date</label>
+            <input class="input" v-model="form.due_date" type="date" />
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" type="submit">Add Task</button>
+          </div>
+
+          <p v-if="error" class="error">{{ error }}</p>
         </div>
       </form>
     </section>
 
     <!-- List + Filter -->
-    <section style="margin: 16px 0; padding: 12px; border: 1px solid #ddd;">
-      <div style="display:flex; justify-content: space-between; align-items:center;">
-        <h3 style="margin: 0;">Tasks List</h3>
-
-        <!-- Filter  API pagination -->
-        <select v-model="filterStatus" @change="onFilterChange">
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-
-      <div v-if="loading" style="margin-top:10px;">Loading...</div>
-
-      <ul v-else style="list-style: none; padding: 0;">
-        <li
-          v-for="t in tasks"
-          :key="t.id"
-          style="display:flex; gap: 10px; align-items:flex-start; padding: 10px 0; border-bottom: 1px solid #eee;"
-        >
-          <!--  View Mode -->
-          <template v-if="editId !== t.id">
-            <div style="flex: 1;">
-              <div style="font-weight: 600;">{{ t.title }}</div>
-              <div style="font-size: 13px; color: #555;">
-                {{ t.description || "—" }} | Status: {{ t.status }} | Due: {{ t.due_date || "—" }}
-              </div>
-            </div>
-
-            <button @click="startEdit(t)">Edit</button>
-            <button @click="deleteTask(t.id)" style="color:#b00020;">Delete</button>
-          </template>
-          <!-- Edit Mode (Update only when Save clicked) -->
-          <template v-else>
-            <div style="flex: 1; display: grid; gap: 8px;">
-              <input v-model="editForm.title" placeholder="Title *" />
-              <textarea v-model="editForm.description" placeholder="Description"></textarea>
-
-              <div style="display:flex; gap: 8px;">
-                <select v-model="editForm.status">
-                  <option value="pending">pending</option>
-                  <option value="in_progress">in_progress</option>
-                  <option value="completed">completed</option>
-                </select>
-
-                <input v-model="editForm.due_date" type="date" />
-              </div>
-
-              <p v-if="editError" style="color:#b00020; margin: 0;">{{ editError }}</p>
-            </div>
-
-            <div style="display:flex; gap: 8px;">
-              <button @click="saveEdit(t.id)">Save</button>
-              <button @click="cancelEdit">Cancel</button>
-            </div>
-          </template>
-        </li>
-      </ul>
-
-      <!--  Pagination -->
-      <div
-        v-if="meta"
-        style="display:flex; justify-content: space-between; align-items:center; margin-top:12px;"
-      >
-        <div style="font-size: 13px; color:#555;">
-          Showing {{ meta.from || 0 }} - {{ meta.to || 0 }} of {{ meta.total || 0 }}
+    <section class="card">
+      <div class="card-head card-head-row">
+        <div>
+          <h2 class="card-title">Tasks List</h2>
+          <p class="muted" style="margin: 4px 0 0;">Filter and paginate your tasks</p>
         </div>
 
-        <div style="display:flex; gap:8px;">
-          <button
-            :disabled="!links?.prev"
-            @click="fetchTasks(links.prev)"
-          >
-            Prev
-          </button>
+        <div class="toolbar">
+          <label class="label" style="margin:0;">Status</label>
+          <select class="select" v-model="filterStatus" @change="onFilterChange">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
 
-          <button
-            :disabled="!links?.next"
-            @click="fetchTasks(links.next)"
-          >
-            Next
-          </button>
+      <div v-if="loading" class="muted" style="padding: 12px;">Loading...</div>
+
+      <div v-else class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">ID</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th style="width: 150px;">Status</th>
+              <th style="width: 150px;">Due Date</th>
+              <th style="width: 220px; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-if="!tasks.length">
+              <td colspan="6" class="muted" style="padding: 14px; text-align:center;">
+                No tasks found.
+              </td>
+            </tr>
+
+            <tr v-for="t in tasks" :key="t.id">
+              <!-- View Mode -->
+              <template v-if="editId !== t.id">
+                <td class="mono">{{ t.id }}</td>
+                <td class="strong">{{ t.title }}</td>
+                <td class="muted">{{ t.description || "—" }}</td>
+
+                <td>
+                  <span class="badge" :class="badgeClass(t.status)">
+                    {{ labelStatus(t.status) }}
+                  </span>
+                </td>
+
+                <td class="mono">{{ t.due_date || "—" }}</td>
+
+                <td style="text-align:right;">
+                  <button class="btn" @click="startEdit(t)">Edit</button>
+                  <button class="btn danger" @click="deleteTask(t.id)">Delete</button>
+                </td>
+              </template>
+
+              <!-- Edit Mode -->
+              <template v-else>
+                <td class="mono">{{ t.id }}</td>
+
+                <td>
+                  <input class="input" v-model="editForm.title" placeholder="Title *" />
+                </td>
+
+                <td>
+                  <input class="input" v-model="editForm.description" placeholder="Description" />
+                </td>
+
+                <td>
+                  <select class="select" v-model="editForm.status">
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </td>
+
+                <td>
+                  <input class="input" v-model="editForm.due_date" type="date" />
+                </td>
+
+                <td style="text-align:right;">
+                  <button class="btn primary" @click="saveEdit(t.id)">Save</button>
+                  <button class="btn" @click="cancelEdit">Cancel</button>
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+
+        <p v-if="editError" class="error" style="padding: 10px 12px 0;">{{ editError }}</p>
+
+        <!-- Pagination -->
+        <div v-if="meta" class="pager">
+          <div class="muted">
+            Showing <span class="mono">{{ meta.from || 0 }}</span> -
+            <span class="mono">{{ meta.to || 0 }}</span> of
+            <span class="mono">{{ meta.total || 0 }}</span>
+          </div>
+
+          <div class="pager-actions">
+            <button class="btn" :disabled="!links?.prev" @click="cancelEdit(); fetchTasks(links.prev)">
+              Prev
+            </button>
+            <button class="btn" :disabled="!links?.next" @click="cancelEdit(); fetchTasks(links.next)">
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -137,6 +189,7 @@ const form = reactive({
   status: "pending",
   due_date: "",
 });
+
 // edit state
 const editId = ref(null);
 const editForm = reactive({
@@ -147,7 +200,17 @@ const editForm = reactive({
 });
 const editError = ref("");
 
-//  fetch tasks data
+// helpers for UI
+function labelStatus(s) {
+  if (s === "in_progress") return "In Progress";
+  if (s === "completed") return "Completed";
+  return "Pending";
+}
+function badgeClass(s) {
+  return s === "completed" ? "ok" : s === "in_progress" ? "warn" : "info";
+}
+
+// fetch tasks data (supports pagination)
 async function fetchTasks(url = null) {
   loading.value = true;
   error.value = "";
@@ -155,11 +218,8 @@ async function fetchTasks(url = null) {
   try {
     const requestUrl = url || "/api/tasks";
 
-    
     const res = await api.get(requestUrl, {
-      params: url
-        ? {}
-        : (filterStatus.value ? { status: filterStatus.value } : {}),
+      params: url ? {} : filterStatus.value ? { status: filterStatus.value } : {},
     });
 
     tasks.value = res.data?.data || [];
@@ -172,8 +232,9 @@ async function fetchTasks(url = null) {
   }
 }
 
-// when filter changes => reload page 1
+// filter => reload page 1
 function onFilterChange() {
+  cancelEdit();
   fetchTasks(null);
 }
 
@@ -193,13 +254,11 @@ async function createTask() {
       due_date: form.due_date || null,
     });
 
-    // Reset form
     form.title = "";
     form.description = "";
     form.status = "pending";
     form.due_date = "";
 
-    //  best with pagination: reload current page data from API
     await fetchTasks(null);
   } catch (e) {
     error.value =
@@ -212,13 +271,12 @@ async function createTask() {
 async function deleteTask(id) {
   try {
     await api.delete(`/api/tasks/${id}`);
-
-    //  After delete, refetch current page.
     await fetchTasks(null);
   } catch (e) {
     error.value = "Failed to delete task.";
   }
 }
+
 function startEdit(task) {
   editId.value = task.id;
   editError.value = "";
@@ -228,6 +286,7 @@ function startEdit(task) {
   editForm.status = task.status || "pending";
   editForm.due_date = task.due_date || "";
 }
+
 function cancelEdit() {
   editId.value = null;
   editError.value = "";
@@ -251,7 +310,6 @@ async function saveEdit(id) {
 
     const updated = res.data?.data;
 
-    // Update task
     if (updated) {
       tasks.value = tasks.value.map((t) => (t.id === id ? updated : t));
     }
@@ -265,7 +323,210 @@ async function saveEdit(id) {
   }
 }
 
-
-
 onMounted(() => fetchTasks(null));
 </script>
+
+<style scoped>
+.page {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 0 14px;
+  font-family: Arial, sans-serif;
+}
+
+.header {
+  margin-bottom: 14px;
+}
+.title {
+  margin: 0;
+  font-size: 22px;
+}
+.subtitle {
+  margin: 6px 0 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px;
+  margin: 16px 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.card-head {
+  margin-bottom: 12px;
+}
+.card-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.card-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.form .grid {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 12px;
+  align-items: end;
+}
+.field.full {
+  grid-column: 1 / -1;
+}
+.label {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 6px;
+}
+.req {
+  color: #b00020;
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  padding: 10px 10px;
+  font-size: 14px;
+  outline: none;
+}
+.textarea {
+  resize: vertical;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.btn {
+  border: 1px solid #dcdcdc;
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.btn:hover {
+  background: #f7f7f7;
+}
+.btn.primary {
+  border-color: #2e6bff;
+  background: #2e6bff;
+  color: #fff;
+}
+.btn.primary:hover {
+  background: #2458d6;
+}
+.btn.danger {
+  border-color: #ffdddd;
+  color: #b00020;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-wrap {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table thead th {
+  background: #fafafa;
+  text-align: left;
+  font-size: 12px;
+  color: #666;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+.table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f1f1;
+  vertical-align: top;
+}
+.table tbody tr:hover {
+  background: #fcfcff;
+}
+
+.strong {
+  font-weight: 600;
+}
+.muted {
+  color: #666;
+  font-size: 13px;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+.badge.info {
+  background: #eef5ff;
+  border-color: #d7e7ff;
+  color: #2b5bb3;
+}
+.badge.warn {
+  background: #fff6e6;
+  border-color: #ffe2b8;
+  color: #8a5a00;
+}
+.badge.ok {
+  background: #eaffea;
+  border-color: #c8f0c8;
+  color: #1f7a1f;
+}
+
+.error {
+  color: #b00020;
+  margin: 0;
+  font-size: 13px;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  gap: 12px;
+  background: #fff;
+}
+.pager-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 820px) {
+  .form .grid {
+    grid-template-columns: 1fr;
+  }
+  .card-head-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>
