@@ -50,14 +50,42 @@
           :key="t.id"
           style="display:flex; gap: 10px; align-items:flex-start; padding: 10px 0; border-bottom: 1px solid #eee;"
         >
-          <div style="flex: 1;">
-            <div style="font-weight: 600;">{{ t.title }}</div>
-            <div style="font-size: 13px; color: #555;">
-              {{ t.description || "—" }} | Status: {{ t.status }} | Due: {{ t.due_date || "—" }}
+          <!--  View Mode -->
+          <template v-if="editId !== t.id">
+            <div style="flex: 1;">
+              <div style="font-weight: 600;">{{ t.title }}</div>
+              <div style="font-size: 13px; color: #555;">
+                {{ t.description || "—" }} | Status: {{ t.status }} | Due: {{ t.due_date || "—" }}
+              </div>
             </div>
-          </div>
 
-          <button @click="deleteTask(t.id)" style="color:#b00020;">Delete</button>
+            <button @click="startEdit(t)">Edit</button>
+            <button @click="deleteTask(t.id)" style="color:#b00020;">Delete</button>
+          </template>
+          <!-- Edit Mode (Update only when Save clicked) -->
+          <template v-else>
+            <div style="flex: 1; display: grid; gap: 8px;">
+              <input v-model="editForm.title" placeholder="Title *" />
+              <textarea v-model="editForm.description" placeholder="Description"></textarea>
+
+              <div style="display:flex; gap: 8px;">
+                <select v-model="editForm.status">
+                  <option value="pending">pending</option>
+                  <option value="in_progress">in_progress</option>
+                  <option value="completed">completed</option>
+                </select>
+
+                <input v-model="editForm.due_date" type="date" />
+              </div>
+
+              <p v-if="editError" style="color:#b00020; margin: 0;">{{ editError }}</p>
+            </div>
+
+            <div style="display:flex; gap: 8px;">
+              <button @click="saveEdit(t.id)">Save</button>
+              <button @click="cancelEdit">Cancel</button>
+            </div>
+          </template>
         </li>
       </ul>
 
@@ -109,6 +137,15 @@ const form = reactive({
   status: "pending",
   due_date: "",
 });
+// edit state
+const editId = ref(null);
+const editForm = reactive({
+  title: "",
+  description: "",
+  status: "pending",
+  due_date: "",
+});
+const editError = ref("");
 
 //  fetch tasks data
 async function fetchTasks(url = null) {
@@ -182,6 +219,53 @@ async function deleteTask(id) {
     error.value = "Failed to delete task.";
   }
 }
+function startEdit(task) {
+  editId.value = task.id;
+  editError.value = "";
+
+  editForm.title = task.title || "";
+  editForm.description = task.description || "";
+  editForm.status = task.status || "pending";
+  editForm.due_date = task.due_date || "";
+}
+function cancelEdit() {
+  editId.value = null;
+  editError.value = "";
+}
+
+async function saveEdit(id) {
+  editError.value = "";
+
+  if (!editForm.title.trim()) {
+    editError.value = "Title is required.";
+    return;
+  }
+
+  try {
+    const res = await api.put(`/api/tasks/${id}`, {
+      title: editForm.title.trim(),
+      description: editForm.description?.trim() || null,
+      status: editForm.status,
+      due_date: editForm.due_date || null,
+    });
+
+    const updated = res.data?.data;
+
+    // Update task
+    if (updated) {
+      tasks.value = tasks.value.map((t) => (t.id === id ? updated : t));
+    }
+
+    editId.value = null;
+  } catch (e) {
+    editError.value =
+      e?.response?.status === 422
+        ? "Validation failed. Please check values."
+        : "Failed to update task.";
+  }
+}
+
+
 
 onMounted(() => fetchTasks(null));
 </script>
